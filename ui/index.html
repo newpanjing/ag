@@ -20,20 +20,6 @@
                     <el-option v-for="item in powerData" :label="item.name" :value="item.value" :key="item.name"></el-option>
                 </el-select>
             </div>
-            <div v-if="settings.model.type==0">
-                <div class="item">
-                    <span>使用电源时：</span>
-                    <el-select v-model="settings.model.ac">
-                        <el-option v-for="item in modelData" :label="item.name" :value="item.value"></el-option>
-                    </el-select>
-                </div>
-                <div class="item">
-                    <span>使用电池时：</span>
-                    <el-select v-model="settings.model.bp">
-                        <el-option v-for="item in modelData" :label="item.name" :value="item.value"></el-option>
-                    </el-select>
-                </div>
-            </div>
             <div v-if="settings.model.type==1" class="sub">
                 <el-radio v-for="item in modelData" v-model="settings.model.value" :label="item.value">{{item.name}}</el-radio>
             </div>
@@ -50,7 +36,7 @@
                 <el-switch v-model="settings.touchBar"> </el-switch>
             </div>
             <div style="text-align: center">
-                <el-button type="primary">重启AG</el-button>
+                <el-button type="primary" @click="restart()">重启AG生效配置</el-button>
             </div>
         </el-tab-pane>
         <el-tab-pane name="1" label="授权信息">
@@ -179,6 +165,6 @@
 </div>
 <script type="text/javascript" src="js/vue.min.js"></script>
 <script type="text/javascript" src="elementui/index.js"></script>
-<script type="text/javascript" src="js/ag.js"></script>
+<script type="text/javascript" src="js/ui.js"></script>
 </body>
 </html>

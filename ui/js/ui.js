@@ -33,9 +33,6 @@
             }, {
                 name: '手动',
                 value: 1
-            }, {
-                name: '系统自动',
-                value: 2
             }],
             settings: {
                 statusText: true,
@@ -43,8 +40,6 @@
                 autoCheck: true,
                 model: {
                     type: 0,
-                    bp: 0,
-                    ac: 1,
                     value: 0
 
                 },
@@ -70,6 +65,9 @@
                     name: 'download',
                     data: this.dialog.download
                 });
+            },
+            restart() {
+                ipcRenderer.send('restart');
             },
             check() {
 
@@ -141,18 +139,22 @@
                 console.log('data')
             })
             ipcRenderer.on('data', (e, r) => {
+                console.log('r:' + r)
                 this.power = r == 'AC Power' ? '电源供电' : '电池供电'
             })
-
+            let sets = ipcRenderer.sendSync('command', {
+                name: 'settings'
+            });
+            if (sets && sets['model']) {
+                this.settings = sets;
+            }
             ipcRenderer.on('switchTab', (event, tabIndex) => {
                 this.tabs = tabIndex + "";
             })
             ipcRenderer.on('checkVersion', () => {
                 this.check();
             });
-            this.settings = ipcRenderer.sendSync('command', {
-                name: 'settings'
-            });
+
 
         }
     })

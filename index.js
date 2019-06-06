@@ -13,6 +13,52 @@ console.log(app.getAppPath())
 var client = null;
 var tempType = null;
 
+var Sue = require('./Sue').Sue;
+var sue = new Sue({
+    data: {
+        powerType: 0,
+        iconText: 'AG',
+        powerMappers: {
+            'AC Power': '独显',
+            'Battery Power': '集显'
+        }
+    },
+    watch: {
+        iconText(newValue) {
+            if (globalSettings.statusText) {
+
+                appIcon.setTitle(newValue);
+
+            }
+        },
+        powerType(newValue, oldValue) {
+            console.log('电源模式：' + newValue)
+
+            //如果是手动模式，不做任何处理
+            if (globalSettings.model.type == 1) {
+                return;
+            }
+
+            //需要判断下切换模式，自动的情况下
+            if (newValue == 'AC Power') {
+                ag.set('1');
+            } else {
+                //电池
+                ag.set('0');
+            }
+
+            //设置图标
+            this.iconText = this.powerMappers[newValue];
+
+            if (client) {
+                client.send('data', newValue);
+            }
+
+        }
+    }
+});
+
+
 function openSettingWindow() {
     if (settingWindow == null) {
         settingWindow = new BrowserWindow({
@@ -43,8 +89,10 @@ function openSettingWindow() {
 
 function createTouchBar() {
     //判断状态，如果配置文件中不需要就不设置
-    return new TouchBar({
-        items: [
+
+    var items = []
+    if (globalSettings.touchBar) {
+        items = [
             new TouchBarButton({
                 label: '偏好设置',
                 click: () => {
@@ -73,6 +121,10 @@ function createTouchBar() {
                 label: '授权至2019年06月05日20:02:28'
             })
         ]
+    }
+
+    return new TouchBar({
+        items: items
     })
 }
 
@@ -96,7 +148,7 @@ if (!gotTheLock) {
     })
 
     app.on('ready', () => {
-        globalSettings = loadSettings();
+
         //打包的情况下
         if (app.isPackaged) {
             if (!app.isInApplicationsFolder()) {
@@ -108,9 +160,7 @@ if (!gotTheLock) {
 
         appIcon = new Tray(`${__dirname}/res/icon.png`)
         appIcon.setToolTip('自动切换显卡')
-        if (globalSettings.statusText) {
-            appIcon.setTitle('AG');
-        }
+
         const contextMenu = Menu.buildFromTemplate([
             {
                 label: '偏好设置', click() {
@@ -145,6 +195,10 @@ if (!gotTheLock) {
         // Call this again for Linux because we modified the context menu
         appIcon.setContextMenu(contextMenu);
 
+        globalSettings = loadSettings();
+        if (globalSettings.statusText) {
+            appIcon.setTitle(sue.iconText);
+        }
         ipcMain.on('command', (event, arg) => {
 
             var data = {
@@ -154,7 +208,7 @@ if (!gotTheLock) {
                 download(url) {
                     shell.openExternal(url);
                 },
-                settings(){
+                settings() {
                     return globalSettings;
                 }
             }
@@ -168,19 +222,8 @@ if (!gotTheLock) {
             }
 
             tempType = type;
-            str = '';
-            console.log('电源模式：' + type)
-            if (type == 'AC Power') {
-                str = '独显';
-                ag.set('1');
-            } else {
-                //电池
-                ag.set('0');
-                str = '集显';
-            }
-            if (globalSettings.statusText) {
-                appIcon.setTitle(str);
-            }
+
+            sue.powerType = type;
         });
 
         ipcMain.on('register', (event, args) => {
@@ -196,6 +239,12 @@ if (!gotTheLock) {
             delete data['modelData'];
             changeSettings(data);
         });
+
+        ipcMain.on('restart', (event, data) => {
+            app.relaunch({args: process.argv.slice(1).concat(['--relaunch'])})
+            app.exit(0)
+        });
+
         openSettingWindow();
 
     });
@@ -216,14 +265,40 @@ if (!gotTheLock) {
 var filepath = os.homedir() + '/.ag';
 
 function changeSettings(settings) {
+    setModel(settings.model);
     fs.writeFileSync(filepath, JSON.stringify(settings));
 }
 
+var latestType = -1;
+
+/**
+ * 根据模式来设置显卡模式
+ * @param model
+ */
+function setModel(model) {
+    if (model.type == 1) {
+        if (model.value != latestType) {
+            latestType = model.value;
+            console.log(model)
+
+            let mappers = {
+                0: '集显',
+                1: '独显'
+            }
+            sue.iconText = mappers[model.value];
+            ag.set(model.value);
+        }
+    }
+}
 
 function loadSettings() {
     var exists = fs.existsSync(filepath);
     if (exists) {
-        return JSON.parse(fs.readFileSync(filepath));
+        let json = JSON.parse(fs.readFileSync(filepath));
+        if (json && json.model) {
+            setModel(json.model)
+        }
+        return json;
     }
     return {};
 }
