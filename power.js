@@ -41,9 +41,5 @@ exports.addListener = function (callback) {
     });
 }
 
-// this.addListener(res => {
-//     console.log(res);
-// })
-
 
 

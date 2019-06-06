@@ -1,13 +1,17 @@
 (function () {
     const {ipcRenderer, net} = require('electron')
     const axios = require('axios');
-    new Vue({
+    window.app = new Vue({
         el: '#app',
         data: {
+            tabs: '0',
+            website: 'https://newpanjing.github.io/ag/',
+            payurl: 'https://www.88cto.com',
             sn: null,
             version: null,
             checking: false,
             update: true,
+            power: null,
             dialog: {
                 name: '',
                 download: '',
@@ -15,9 +19,52 @@
                 created_at: '',
                 version: '',
                 show: false
+            },
+            modelData: [{
+                name: '集显',
+                value: 0
+            }, {
+                name: '独显',
+                value: 1
+            }],
+            powerData: [{
+                name: '自动',
+                value: 0
+            }, {
+                name: '手动',
+                value: 1
+            }, {
+                name: '系统自动',
+                value: 2
+            }],
+            settings: {
+                statusText: true,
+                touchBar: true,
+                autoCheck: true,
+                model: {
+                    type: 0,
+                    bp: 0,
+                    ac: 1,
+                    value: 0
+
+                },
+                radio: 0,
+            }
+        },
+        watch: {
+            settings: {
+                deep: true,
+                handler(newValue, oldValue) {
+                    console.log(newValue)
+                    //将值发送的主进程处理
+                    ipcRenderer.send('settings', newValue);
+                }
             }
         },
         methods: {
+            openSite(site) {
+                ipcRenderer.send('openUrl', site);
+            },
             download() {
                 ipcRenderer.sendSync('command', {
                     name: 'download',
@@ -89,6 +136,24 @@
             this.version = ipcRenderer.sendSync('command', {
                 name: 'version'
             });
+
+            ipcRenderer.send('register', function (data) {
+                console.log('data')
+            })
+            ipcRenderer.on('data', (e, r) => {
+                this.power = r == 'AC Power' ? '电源供电' : '电池供电'
+            })
+
+            ipcRenderer.on('switchTab', (event, tabIndex) => {
+                this.tabs = tabIndex + "";
+            })
+            ipcRenderer.on('checkVersion', () => {
+                this.check();
+            });
+            this.settings = ipcRenderer.sendSync('command', {
+                name: 'settings'
+            });
+
         }
     })
 })();

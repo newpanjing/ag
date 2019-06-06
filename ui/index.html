@@ -4,16 +4,145 @@
     <meta charset="UTF-8">
     <title>AG-自动显卡切换</title>
     <link rel="stylesheet" href="elementui/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="./css/style.css"/>
 </head>
 <body>
 <div id="app">
-    <el-tabs tab-position="top" style="height: 200px;">
-        <el-tab-pane label="偏好设置">偏好设置</el-tab-pane>
-        <el-tab-pane label="授权信息">
-            <div>您正处于免费期，有效期截止至2019年07月01日</div>
-            <div>您的识别码：{{sn}}</div>
+    <el-tabs v-model="tabs" tab-position="top" style="height: 200px;">
+        <el-tab-pane name="0" label="偏好设置">
+            <div class="item">
+                <span>电源模式：</span>
+                <span v-text="power"></span>
+            </div>
+            <div class="item">
+                <span>切换模式：</span>
+                <el-select v-model="settings.model.type">
+                    <el-option v-for="item in powerData" :label="item.name" :value="item.value" :key="item.name"></el-option>
+                </el-select>
+            </div>
+            <div v-if="settings.model.type==0">
+                <div class="item">
+                    <span>使用电源时：</span>
+                    <el-select v-model="settings.model.ac">
+                        <el-option v-for="item in modelData" :label="item.name" :value="item.value"></el-option>
+                    </el-select>
+                </div>
+                <div class="item">
+                    <span>使用电池时：</span>
+                    <el-select v-model="settings.model.bp">
+                        <el-option v-for="item in modelData" :label="item.name" :value="item.value"></el-option>
+                    </el-select>
+                </div>
+            </div>
+            <div v-if="settings.model.type==1" class="sub">
+                <el-radio v-for="item in modelData" v-model="settings.model.value" :label="item.value">{{item.name}}</el-radio>
+            </div>
+            <div class="item">
+                <span>状态栏文本：</span>
+                <el-switch v-model="settings.statusText"> </el-switch>
+            </div>
+            <div class="item">
+                <span>检查更新：</span>
+                <el-switch v-model="settings.autoCheck"> </el-switch>
+            </div>
+            <div class="item">
+                <span>触控条：</span>
+                <el-switch v-model="settings.touchBar"> </el-switch>
+            </div>
+            <div style="text-align: center">
+                <el-button type="primary">重启AG</el-button>
+            </div>
         </el-tab-pane>
-        <el-tab-pane label="版本更新">
+        <el-tab-pane name="1" label="授权信息">
+
+            <el-card class="box-card">
+                <div slot="header" class="clearfix">
+                    <span>您的识别码：{{sn}}</span>
+                    <el-button style="float: right; padding: 3px 0" type="text" @click="openSite(payurl)">淘宝购买</el-button>
+                </div>
+                <el-tabs tab-position="left" style="height: 200px;">
+                    <el-tab-pane label="免费版">
+                        <table>
+                            <tr>
+                                <th>价格</th>
+                                <td>￥0.00</td>
+                            </tr>
+                            <tr>
+                                <th>有效期</th>
+                                <td>7天</td>
+                            </tr>
+                            <tr>
+                                <th>在线客服</th>
+                                <td><span class="el-icon-close no"></span></td>
+                            </tr>
+                            <tr>
+                                <th>技术支持</th>
+                                <td><span class="el-icon-close no"></span></td>
+                            </tr>
+                            <tr>
+                                <th>自定义设置</th>
+                                <td><span class="el-icon-check yes"></span></td>
+                            </tr>
+                        </table>
+                    </el-tab-pane>
+                    <el-tab-pane label="1年授权">
+                        <table>
+                            <tr>
+                                <th>价格</th>
+                                <td>￥9.9</td>
+                            </tr>
+                            <tr>
+                                <th>有效期</th>
+                                <td>365天</td>
+                            </tr>
+                            <tr>
+                                <th>在线客服</th>
+                                <td><span class="el-icon-close no"></span></td>
+                            </tr>
+                            <tr>
+                                <th>技术支持</th>
+                                <td><span class="el-icon-close no"></span></td>
+                            </tr>
+                            <tr>
+                                <th>自定义设置</th>
+                                <td><span class="el-icon-check yes"></span></td>
+                            </tr>
+                        </table>
+                    </el-tab-pane>
+                    <el-tab-pane label="永久授权">
+                        <table>
+                            <tr>
+                                <th>价格</th>
+                                <td>￥99</td>
+                            </tr>
+                            <tr>
+                                <th>有效期</th>
+                                <td>永久有效</td>
+                            </tr>
+                            <tr>
+                                <th>在线客服</th>
+                                <td><span class="el-icon-check yes"></span></td>
+                            </tr>
+                            <tr>
+                                <th>技术支持</th>
+                                <td><span class="el-icon-check yes"></span></td>
+                            </tr>
+                            <tr>
+                                <th>自定义设置</th>
+                                <td><span class="el-icon-check yes"></span></td>
+                            </tr>
+                        </table>
+                    </el-tab-pane>
+                </el-tabs>
+            </el-card>
+            <div class="tips">
+                <p>在淘宝付费购买后，请备注或者告诉客服您的识别码</p>
+                <p>客服会在后台对您的电脑进行激活。</p>
+                <p>支持7天无理由退款，退款后软件将暂停使用，在下次付费后重新激活。</p>
+            </div>
+
+        </el-tab-pane>
+        <el-tab-pane name="2" label="版本更新">
             <div style="text-align: center">
                 <div style="margin-bottom: 10px">当前版本：{{version}}</div>
                 <div>
@@ -24,11 +153,11 @@
                 </div>
             </div>
         </el-tab-pane>
-        <el-tab-pane label="关于AG">
+        <el-tab-pane name="3" label="关于AG">
             <el-card class="box-card">
                 <div slot="header" class="clearfix">
                     <span>AG 即Automatic graphics缩写</span>
-                    <el-button style="float: right; padding: 3px 0" type="text">访问官网</el-button>
+                    <el-button style="float: right; padding: 3px 0" type="text" @click="openSite(website)">访问官网</el-button>
                 </div>
                 <div style="text-align: center">
                     <img src="./img/qrcode.png">
