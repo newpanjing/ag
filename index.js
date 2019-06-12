@@ -1,5 +1,5 @@
 const electron = require('electron')
-const {app, Menu, Tray, Notification, ipcMain, shell, ipcRenderer, BrowserWindow, TouchBar} = electron
+const {app, Menu, Tray, Notification, ipcMain, shell, ipcRenderer, BrowserWindow, TouchBar, dialog} = electron
 const {TouchBarLabel, TouchBarButton, TouchBarSpacer} = TouchBar
 const power = require('./power');
 const ag = require('./ag');
@@ -32,10 +32,11 @@ var sue = new Sue({
             }
         },
         powerType(newValue, oldValue) {
+
             console.log('电源模式：' + newValue)
 
             //如果是手动模式，不做任何处理
-            if (globalSettings.model.type == 1) {
+            if (globalSettings.model && globalSettings.model.type && globalSettings.model.type == 1) {
                 return;
             }
 
@@ -99,22 +100,22 @@ function createTouchBar() {
                     selectTouchbar(0);
                 }
             }),
+            // new TouchBarButton({
+            //     label: '授权信息',
+            //     click: () => {
+            //         selectTouchbar(1);
+            //     }
+            // }),
             new TouchBarButton({
-                label: '授权信息',
+                label: '版本更新',
                 click: () => {
                     selectTouchbar(1);
                 }
             }),
             new TouchBarButton({
-                label: '版本更新',
-                click: () => {
-                    selectTouchbar(2);
-                }
-            }),
-            new TouchBarButton({
                 label: '关于AG',
                 click: () => {
-                    selectTouchbar(3);
+                    selectTouchbar(2);
                 }
             }),
             new TouchBarLabel({
@@ -222,8 +223,10 @@ if (!gotTheLock) {
             }
 
             tempType = type;
-
-            sue.powerType = type;
+            console.log(type)
+            if (type != undefined) {
+                sue.powerType = type;
+            }
         });
 
         ipcMain.on('register', (event, args) => {

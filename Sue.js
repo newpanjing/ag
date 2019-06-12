@@ -41,7 +41,7 @@ class Sue {
         var self = this;
 
         (function (obj, field) {
-            var value = undefined;
+            var value = obj[field] || undefined;
             Object.defineProperty(obj, field, {
                 set(v) {
                     callback.call(self, v, value);

@@ -37,7 +37,6 @@
             settings: {
                 statusText: true,
                 touchBar: true,
-                autoCheck: true,
                 model: {
                     type: 0,
                     value: 0
